@@ -1,7 +1,7 @@
 ### **Hướng Dẫn Cài Đặt n8n, Uptime Kuma, Caddy, và Docker Trên Ubuntu**
 
 Bài viết này cung cấp hướng dẫn chi tiết để cài đặt **n8n**, **Uptime Kuma**, **Caddy** làm reverse proxy hỗ trợ SSL, và **Docker** trên Ubuntu. Tất cả các bước được tự động hóa thông qua một script.
-
+Xem hướng dẫn đăng ký Oracle VPS Free: [Oracle VPS Free](https://blog.webdep24h.com/2023/11/dang-ky-vps-oracle-mien-phi.html)
 ---
 
 ## **1. Giới Thiệu**
