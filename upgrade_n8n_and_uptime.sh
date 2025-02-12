@@ -27,25 +27,23 @@ if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
     mkdir -p "$BACKUP_DIR/n8n"
     mkdir -p "$BACKUP_DIR/uptime-kuma"
 
-    # Backup dữ liệu n8n
-    echo "Backup dữ liệu n8n..."
-    rsync -a --delete "$N8N_DIR/" "$BACKUP_DIR/n8n/"
-    if [ $? -eq 0 ]; then
-        echo "Backup n8n hoàn tất tại $BACKUP_DIR/n8n"
-    else
-        echo "Lỗi khi backup n8n! Hủy quá trình nâng cấp."
-        exit 1
-    fi
+# Backup dữ liệu n8n
+echo "Backup dữ liệu n8n..."
+if rsync -a --delete "$N8N_DIR/" "$BACKUP_DIR/n8n/"; then
+    echo "Backup n8n hoàn tất tại $BACKUP_DIR/n8n"
+else
+    echo "Lỗi khi backup n8n! Hủy quá trình nâng cấp."
+    exit 1
+fi
 
-    # Backup dữ liệu Uptime Kuma
-    echo "Backup dữ liệu Uptime Kuma..."
-    rsync -a --delete "$UPTIME_DIR/" "$BACKUP_DIR/uptime-kuma/"
-    if [ $? -eq 0 ]; then
-        echo "Backup Uptime Kuma hoàn tất tại $BACKUP_DIR/uptime-kuma"
-    else
-        echo "Lỗi khi backup Uptime Kuma! Hủy quá trình nâng cấp."
-        exit 1
-    fi
+# Backup dữ liệu Uptime Kuma
+echo "Backup dữ liệu Uptime Kuma..."
+if rsync -a --delete "$UPTIME_DIR/" "$BACKUP_DIR/uptime-kuma/"; then
+    echo "Backup Uptime Kuma hoàn tất tại $BACKUP_DIR/uptime-kuma"
+else
+    echo "Lỗi khi backup Uptime Kuma! Hủy quá trình nâng cấp."
+    exit 1
+fi
 else
     read -p "Bạn có chắc chắn muốn tiếp tục mà không backup? (y/n): " confirm
     if [[ $confirm != [yY] && $confirm != [yY][eE][sS] ]]; then
