@@ -6,7 +6,7 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-# Đường dẫn thư mục
+# Đường dẫn thư mục dữ liệu
 N8N_DIR="/home/deploy/n8n"
 UPTIME_DIR="/home/deploy/uptime-kuma"
 DOCKER_COMPOSE_FILE="/home/deploy/docker-compose.yml"
@@ -27,23 +27,23 @@ if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
     mkdir -p "$BACKUP_DIR/n8n"
     mkdir -p "$BACKUP_DIR/uptime-kuma"
 
-# Backup dữ liệu n8n
-echo "Backup dữ liệu n8n..."
-if rsync -a --delete "$N8N_DIR/" "$BACKUP_DIR/n8n/"; then
-    echo "Backup n8n hoàn tất tại $BACKUP_DIR/n8n"
-else
-    echo "Lỗi khi backup n8n! Hủy quá trình nâng cấp."
-    exit 1
-fi
+    # Backup dữ liệu n8n
+    echo "Backup dữ liệu n8n..."
+    if rsync -a --delete "$N8N_DIR/" "$BACKUP_DIR/n8n/"; then
+        echo "Backup n8n hoàn tất tại $BACKUP_DIR/n8n"
+    else
+        echo "Lỗi khi backup n8n! Hủy quá trình nâng cấp."
+        exit 1
+    fi
 
-# Backup dữ liệu Uptime Kuma
-echo "Backup dữ liệu Uptime Kuma..."
-if rsync -a --delete "$UPTIME_DIR/" "$BACKUP_DIR/uptime-kuma/"; then
-    echo "Backup Uptime Kuma hoàn tất tại $BACKUP_DIR/uptime-kuma"
-else
-    echo "Lỗi khi backup Uptime Kuma! Hủy quá trình nâng cấp."
-    exit 1
-fi
+    # Backup dữ liệu Uptime Kuma
+    echo "Backup dữ liệu Uptime Kuma..."
+    if rsync -a --delete "$UPTIME_DIR/" "$BACKUP_DIR/uptime-kuma/"; then
+        echo "Backup Uptime Kuma hoàn tất tại $BACKUP_DIR/uptime-kuma"
+    else
+        echo "Lỗi khi backup Uptime Kuma! Hủy quá trình nâng cấp."
+        exit 1
+    fi
 else
     read -p "Bạn có chắc chắn muốn tiếp tục mà không backup? (y/n): " confirm
     if [[ $confirm != [yY] && $confirm != [yY][eE][sS] ]]; then
@@ -52,23 +52,26 @@ else
     fi
 fi
 
-# Bắt đầu nâng cấp
-echo "============================="
-echo "Bắt đầu nâng cấp n8n và Uptime Kuma..."
-echo "============================="
-
 # Kiểm tra file docker-compose.yml
 if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
     echo "Không tìm thấy file docker-compose.yml tại $DOCKER_COMPOSE_FILE. Hủy quá trình nâng cấp."
     exit 1
 fi
 
-# Di chuyển đến thư mục chứa docker-compose.yml
-cd "$(dirname "$DOCKER_COMPOSE_FILE")"
+# Bắt đầu nâng cấp
+echo "============================="
+echo "Bắt đầu nâng cấp n8n và Uptime Kuma..."
+echo "============================="
 
-# Pull image mới nhất
+# Di chuyển đến thư mục chứa docker-compose.yml
+cd "$(dirname "$DOCKER_COMPOSE_FILE")" || { echo "Không thể di chuyển đến thư mục docker-compose!"; exit 1; }
+
+# Kéo image mới nhất
 echo "Kéo các image Docker mới nhất..."
-docker-compose pull
+if ! docker-compose pull; then
+    echo "Lỗi khi tải image mới. Hủy quá trình nâng cấp."
+    exit 1
+fi
 
 # Dừng và xóa container cũ
 echo "Dừng các container cũ..."
@@ -76,9 +79,12 @@ docker-compose down
 
 # Khởi động container với image mới
 echo "Khởi động lại các container với image mới..."
-docker-compose up -d
+if ! docker-compose up -d; then
+    echo "Lỗi khi khởi động lại container! Kiểm tra lại Docker Compose."
+    exit 1
+fi
 
-# Kiểm tra trạng thái
+# Kiểm tra trạng thái container sau khi nâng cấp
 echo "Đợi 10 giây để kiểm tra trạng thái các container..."
 sleep 10
 
@@ -90,6 +96,7 @@ else
     echo "Có lỗi xảy ra! Một hoặc nhiều container không hoạt động."
     echo "Kiểm tra logs:"
     docker-compose logs --tail=50
+    exit 1
 fi
 
 echo "============================="
